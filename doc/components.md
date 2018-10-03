@@ -297,11 +297,12 @@ handler-fn is required to return one of following values
 
 ### Monitoring for consumer<a name="monitoring"></a>
 
-Monitoring component is required dependency for consumer
+Monitoring component is a required dependency for the consumer component
  (it has to be present under the monitoring key in the system map.)
 
-Bunnicula provides basic [monitoring component](#base-monitoring-component-).
-If you require some more advanced monitoring functionality you can also implement your own component.
+Bunnicula provides a basic [monitoring component](#base-monitoring-component-).
+If you require more advanced monitoring functionality you can also implement your own.
+
 The component needs to implement all methods from [Monitoring protocol](../src/bunnicula/protocol.clj)
 and support [component lifecycle](https://github.com/stuartsierra/component#creating-components)
 
@@ -312,6 +313,49 @@ which will track consumer metrics and send those to StatsD and report exceptions
 
 Provides basic monitoring functionality for [consumer component](#consumer-component)
 
-It logs the result of consumer's message-handler-fn.
+It logs the result of consumer's `message-handler-fn` using `clojure.tools.logging`.
 
-See more details in [here](#monitoring-) how to define your own monitoring component for consumer.
+### Example custom monitoring component
+
+You can completely override metrics and error reporting backends and call their APIs directly:
+
+```clojure
+(ns bunnicula.monitoring.custom
+  (:require [com.stuartsierra.component :as component]
+            [clojure.tools.logging :as log]
+            [bunnicula.protocol :as protocol]
+            [xyz.component.raygun :as raygun]
+            [xyz.component.graphite :as graphite]))
+
+(defrecord CustomMonitoring [consumer-name raygun graphite]
+  component/Lifecycle
+    (start [c]
+    (log/infof "start consumer-name=%s" consumer-name)
+      c)
+  (stop [c]
+    (log/infof "stop consumer-name=%s" consumer-name)
+    c)
+  protocol/Monitoring
+  (on-success [this args]
+    (log/infof "consumer=%s success" consumer-name)
+    (graphite/count graphite :success consumer-name))
+  (on-error [this args]
+    (log/errorf "consumer=%s error payload=%s"
+                consumer-name (log-fn (:message args)))
+    (graphite/count graphite :error consumer-name))
+  (on-timeout [this args]
+    (log/errorf "consumer=%s timeout payload=%s"
+                consumer-name (log-fn (:message args)))
+    (graphite/count graphite :timeout consumer-name))
+  (on-retry [this args]
+    (log/errorf "consumer=%s retry-attempts=%d payload=%s"
+                consumer-name (:retry-attempts args) (log-fn (:message args)))
+    (graphite/count graphite :retry consumer-name))
+  (on-exception [this args]
+    (let [{:keys [exception message]} args]
+      (log/errorf exception "consumer=%s exception payload=%s"
+                  consumer-name (log-fn message))
+      (when exception-tracker
+        (tracker/report raygun exception)))
+    (graphite/count graphite :fail consumer-name)))
+```
