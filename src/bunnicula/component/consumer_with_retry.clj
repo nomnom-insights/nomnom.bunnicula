@@ -289,21 +289,27 @@
       :consumer-channels nil)))
 
 ;; ======= setup function ===========
+(def default-options
+  {:max-retries 3
+   :backoff-interval-seconds 60
+   :timeout-seconds 60
+   :prefetch-count 10
+   :consumer-threads 4})
+
+(def allowed-options-keys
+  (conj (set (keys default-options)) :exchange-name :queue-name))
+
 (defn- set-defaults [options]
-  (merge
-    {:max-retries 3
-     :backoff-interval-seconds 60
-     :timeout-seconds 60
-     :prefetch-count 10
-     :consumer-threads 4}
-    options))
+  (merge default-options options))
 
 (defn create
   [{:keys [options message-handler-fn deserializer]}]
   {:pre [(fn? message-handler-fn)
          ;; ensure required keys for options are present
          (string? (:queue-name options))
-         (string? (:exchange-name options))]}
+         (string? (:exchange-name options))
+         ;; ensure no invalid key is passed in options (avoid typos in config etc.)
+         (every? #(contains? allowed-options-keys %) (keys options))]}
   (map->RetryConsumer
     {:message-handler-fn message-handler-fn
      :deserializer (or deserializer utils/json-deserializer)
