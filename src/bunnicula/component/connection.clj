@@ -4,7 +4,7 @@
             [com.stuartsierra.component :as component]
             [clojure.tools.logging :as log]
             [clojure.string :as string])
-  (:import [java.net.URI]))
+  (:import (java.net URI)))
 
 (defn- connection-url
   [{:keys [host port username password vhost]}]
