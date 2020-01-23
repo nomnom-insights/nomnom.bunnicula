@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/clojure:lein-2.7.1
+      - image: circleci/clojure:openjdk-11-lein-2.9.1
       - image: rabbitmq:3.6.5-management
         ports:
           - "5672:5672"
