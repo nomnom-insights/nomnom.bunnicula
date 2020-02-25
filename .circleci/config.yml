@@ -4,8 +4,6 @@ jobs:
     docker:
       - image: circleci/clojure:openjdk-11-lein-2.9.1
       - image: rabbitmq:3.8.2-management
-        volumes:
-          - rabbitmq:/var/lib/rabbitmq
         environment:
           - RABBITMQ_DEFAULT_USER=rabbit
           - RABBITMQ_DEFAULT_PASS=password
