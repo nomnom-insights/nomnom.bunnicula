@@ -119,7 +119,8 @@ jobs:
 
 workflows:
   version: 2
-  jobs:
-    - rabbit_365
-    - rabbit_372
-    - rabbit_382
+  test_all:
+    jobs:
+      - rabbit_365
+      - rabbit_372
+      - rabbit_382
