@@ -1,11 +1,11 @@
 (defproject nomnom/bunnicula "2.1.0"
   :description "Bunnicula: RabbitMQ client"
   :url "https://github.com/nomnom-insights/nomnom.bunnicula"
-  :dependencies [[org.clojure/clojure "1.10.0"]
-                 [org.clojure/tools.logging "0.5.0-alpha.1"]
-                 [com.rabbitmq/amqp-client "5.7.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
+                 [org.clojure/tools.logging "0.6.0"]
+                 [com.rabbitmq/amqp-client "5.8.0"]
                  [com.stuartsierra/component "0.4.0"]
-                 [cheshire "5.8.1"]]
+                 [cheshire "5.10.0"]]
   :deploy-repositories {"clojars" {:sign-releases false}}
   :min-lein-version "2.5.0"
   :license {:name "MIT License"

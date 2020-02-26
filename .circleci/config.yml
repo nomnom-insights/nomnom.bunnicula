@@ -1,11 +1,9 @@
 version: 2.1
 jobs:
-  build:
+  rabbit_382:
     docker:
       - image: circleci/clojure:openjdk-11-lein-2.9.1
-      - image: rabbitmq:3.6.5-management
-        volumes:
-          - rabbitmq:/var/lib/rabbitmq
+      - image: rabbitmq:3.8.2-management
         environment:
           - RABBITMQ_DEFAULT_USER=rabbit
           - RABBITMQ_DEFAULT_PASS=password
@@ -40,3 +38,89 @@ jobs:
           command: dockerize -wait tcp://localhost:5672 -timeout 1m
 
       - run: lein test
+
+  rabbit_372:
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.1
+      - image: rabbitmq:3.7.2-management
+        environment:
+          - RABBITMQ_DEFAULT_USER=rabbit
+          - RABBITMQ_DEFAULT_PASS=password
+          - RABBITMQ_DEFAULT_VHOST=/main
+
+    environment:
+      LEIN_ROOT: "true"
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx2000m
+      RABBIT_URL: "amqp://rabbit:password@localhost:5672"
+      RABBIT_VHOST: "/main"
+      CIRCLE: "yep"
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "project.clj" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: lein deps
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+      - run:
+          name: Wait for rabbit
+          command: dockerize -wait tcp://localhost:5672 -timeout 1m
+
+      - run: lein test
+
+  rabbit_365:
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.1
+      - image: rabbitmq:3.6.5-management
+        environment:
+          - RABBITMQ_DEFAULT_USER=rabbit
+          - RABBITMQ_DEFAULT_PASS=password
+          - RABBITMQ_DEFAULT_VHOST=/main
+
+    environment:
+      LEIN_ROOT: "true"
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx2000m
+      RABBIT_URL: "amqp://rabbit:password@localhost:5672"
+      RABBIT_VHOST: "/main"
+      CIRCLE: "yep"
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "project.clj" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: lein deps
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+      - run:
+          name: Wait for rabbit
+          command: dockerize -wait tcp://localhost:5672 -timeout 1m
+
+      - run: lein test
+
+workflows:
+  version: 2
+  test_all:
+    jobs:
+      - rabbit_365
+      - rabbit_372
+      - rabbit_382
