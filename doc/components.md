@@ -1,5 +1,36 @@
 # Bunnicula components
 
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
+
+- [Bunnicula components](#bunnicula-components)
+    - [RabbitMQ implementation details](#rabbitmq-implementation-details)
+        - [RabbitMQ best practices](#rabbitmq-best-practices)
+        - [Automatic recovery](#automatic-recovery)
+        - [Durability](#durability)
+    - [Connection component <a name="connection-component"></a>](#connection-component-a-nameconnection-componenta)
+        - [Configuration](#configuration)
+        - [Usage](#usage)
+    - [Publisher component <a name="publisher-component"></a>](#publisher-component-a-namepublisher-componenta)
+        - [Configuration](#configuration-1)
+        - [Publish method](#publish-method)
+            - [options](#options)
+        - [Usage](#usage-1)
+        - [Mock publisher](#mock-publisher)
+    - [Consumer with retry component <a name="consumer-component"></a>](#consumer-with-retry-component-a-nameconsumer-componenta)
+        - [Message flow](#message-flow)
+        - [Exchanges and Queues](#exchanges-and-queues)
+        - [Component dependencies](#component-dependencies)
+        - [Configuration](#configuration-2)
+            - [message-handler-fn <a name="handler-fn"></a>](#message-handler-fn-a-namehandler-fna)
+        - [Usage](#usage-2)
+        - [Monitoring for consumer<a name="monitoring"></a>](#monitoring-for-consumera-namemonitoringa)
+    - [Base monitoring component <a name="base-monitoring-component"></a>](#base-monitoring-component-a-namebase-monitoring-componenta)
+        - [Example custom monitoring component](#example-custom-monitoring-component)
+
+<!-- markdown-toc end -->
+
+
 Buniccula is framework for asynchronous messaging with RabbitMQ.
 
 It defines 4 components (based on [Stuart Sierra's component lib](https://github.com/stuartsierra/component))
@@ -241,10 +272,10 @@ function to be used to deserializer messages
 
 handler-fn takes 4 arguments
 
-- `body` raw message data
-- `parsed` parsed message (most likely you just need to used this data in your handler fn)
+- `body` raw message data, as received by the consumer - usally `byte[]`
+- `parsed` parsed message, parsing is defined by the deserializer function - by default it's JSON. This is the payload used by the handler
 - `envelope` message envelope
-- `components` components which are specified as component dependencies for consumer
+- `components` - components which are specified as dependencies for the consumer
 
 handler-fn is required to return one of following values
 
@@ -258,6 +289,17 @@ handler-fn is required to return one of following values
  ;; return supported response value
  :ack)
 ```
+
+The envelope is a map of:
+
+```clojure
+{:routing-key "QUEUE-NAME",
+:exchange "",
+:redelivered? false,
+:delivery-tag 1}
+```
+
+(see the [JavaDoc](https://www.rabbitmq.com/releases/rabbitmq-java-client/v2.4.1/rabbitmq-java-client-javadoc-2.4.1/index.html?com/rabbitmq/client/Envelope.html) for details)
 
 
 ### Usage
