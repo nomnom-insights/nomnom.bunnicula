@@ -7,26 +7,27 @@ A Clojure RabbitMQ client.
 [![CircleCI](https://circleci.com/gh/nomnom-insights/nomnom.bunnicula.svg?style=svg)](https://circleci.com/gh/nomnom-insights/nomnom.bunnicula)
 
 
-## Usage
+## Installation
 
 **Leiningen** (via [Clojars](https://clojars.org/nomnom/bunnicula))
 
 [![](https://img.shields.io/clojars/v/nomnom/bunnicula.svg)](https://clojars.org/nomnom/bunnicula)
 
 
-## Documentation
+## Usage
 
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
 - [bunnicula](#bunnicula)
+    - [Installation](#installation)
     - [Usage](#usage)
-    - [Documentation](#documentation)
-    - [RabbitMQ implementation details](#rabbitmq-implementation-details)
-        - [RabbitMQ best practices](#rabbitmq-best-practices)
-        - [Automatic recovery](#automatic-recovery)
-        - [Durability](#durability)
+        - [RabbitMQ implementation details](#rabbitmq-implementation-details)
+            - [RabbitMQ best practices](#rabbitmq-best-practices)
+            - [Automatic recovery](#automatic-recovery)
+            - [Durability](#durability)
+- [Components](#components)
     - [Connection component <a name="connection-component"></a>](#connection-component-a-nameconnection-componenta)
         - [Configuration](#configuration)
         - [Usage](#usage-1)
@@ -62,9 +63,9 @@ It defines 4 components (based on [Stuart Sierra's component lib](https://github
 - consumer
 - base monitoring
 
-## RabbitMQ implementation details
+### RabbitMQ implementation details
 
-### RabbitMQ best practices
+#### RabbitMQ best practices
 
 Bunnicula follows the RabbitMQ best practices, inspired by following blog posts.
 - [mike hadlow RabbitMQ best practices](http://mikehadlow.blogspot.com/2013/09/rabbitmq-amqp-channel-best-practices.html)
@@ -80,19 +81,21 @@ See the relevant practices implemented in Bunnicula
 - Consumers don't have an unlimited prefetch value (default value is set to 10)
 - An ACK is invoked on the same channel on which the delivery was received
 
-### Automatic recovery
+#### Automatic recovery
 
 Bunnicula uses official RabbitMQ Java client for creating connections, consumers etc.
 As of version 4.0.0 of the Java client, automatic recovery is enabled by default.
  See more details [here](https://www.rabbitmq.com/api-guide.html#recovery)
 
 
-### Durability
+#### Durability
 
 By default we ensure your data will survive server restart.
 
 All queues defined by consumer component are durable.
 Publisher component publishes persistent message by default.
+
+# Components
 
 ## Connection component <a name="connection-component"></a>
 Connection component represents RabbitMQ connection.
@@ -126,7 +129,7 @@ or by map with `host`, `port`, `username` and `password` keys
 (component/start connection)
 ```
 
-<img src="images/rmq-connection.png" height="200px" />
+<img src="doc/images/rmq-connection.png" height="200px" />
 
 ## Publisher component <a name="publisher-component"></a>
 Publisher component is used for publishing messages to the broker.
@@ -240,7 +243,7 @@ Processing message on consumer can result in one of following results
 3. **recoverable failure** => ACK message on original queue and push message to retry queue
 to be processed later
 
-<img src="images/message-flow.png" width="800" />
+<img src="doc/images/message-flow.png" width="800" />
 
 ### Exchanges and Queues
 
@@ -263,8 +266,8 @@ Note all queues are durable and publishing messages between queues ensure they a
  Only retry and error exchanges are created by the consumer component.
 
 <p float="left">
-  <img src="images/rmq-exchanges.png" width="400" />
-  <img src="images/rmq-queues.png" width="400" />
+  <img src="doc/images/rmq-exchanges.png" width="400" />
+  <img src="doc/images/rmq-queues.png" width="400" />
 </p>
 
 
