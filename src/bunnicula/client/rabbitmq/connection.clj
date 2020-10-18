@@ -17,5 +17,5 @@
 
 (defn close
   [^Connection conn]
-  (if (.isOpen ^Connection conn)
+  (when (.isOpen ^Connection conn)
     (.close ^Connection conn)))

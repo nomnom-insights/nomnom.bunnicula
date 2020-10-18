@@ -43,7 +43,7 @@
           #(string? (:username %))
           #(string? (:password %))
           #(string? (:vhost %))]}
-  (if-let [^java.net.URI uri (and url (java.net.URI. url))]
+  (if-let [^URI uri (and url (java.net.URI. url))]
     (let [[username password] (string/split (.getUserInfo uri) #":")]
       {:host (.getHost uri)
        :port (.getPort uri)

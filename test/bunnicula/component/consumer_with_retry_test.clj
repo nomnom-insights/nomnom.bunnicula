@@ -1,11 +1,11 @@
 (ns bunnicula.component.consumer-with-retry-test
   (:require
     [bunnicula.component.connection :as connection]
-    [bunnicula.component.consumer-with-retry :refer :all]
+    [bunnicula.component.consumer-with-retry :as consumer]
     [bunnicula.component.monitoring :as mon]
     [bunnicula.component.publisher :as publisher]
     [bunnicula.protocol :as protocol]
-    [clojure.test :refer :all]
+    [clojure.test :refer [deftest is testing]]
     [com.stuartsierra.component :as component])
   (:import
     (com.rabbitmq.client
@@ -41,7 +41,7 @@
 
 
 (defn message-handler-fn
-  [payload message envelope consumer-system]
+  [_payload message _envelope consumer-system]
   (inc-test-result message)
   (case message
     "ok" (if (= (:dependency consumer-system) "I AM DEPENDENCY")
@@ -66,7 +66,7 @@
     :dependency "I AM DEPENDENCY"
     :mock-monitoring mon/BaseMonitoring
     :mock-consumer (component/using
-                     (create
+                     (consumer/create
                        {:options queue-options
                         :handler message-handler-fn})
                      ;; those to are required dependencies
@@ -76,8 +76,8 @@
                       :dependency :dependency})
 
     :mock-consumer-2 (component/using
-                       (create {:options test-queue-2
-                                :message-handler-fn message-handler-fn})
+                       (consumer/create {:options test-queue-2
+                                         :message-handler-fn message-handler-fn})
                        {:rmq-connection :rmq-connection
                         :monitoring :mock-monitoring
                       ;; will be passed to message-handler

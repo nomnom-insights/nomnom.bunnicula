@@ -1,9 +1,9 @@
 (ns bunnicula.component.publisher-test
   (:require
     [bunnicula.component.connection :as connection]
-    [bunnicula.component.publisher :refer :all]
+    [bunnicula.component.publisher :as publisher]
     [bunnicula.protocol :as protocol]
-    [clojure.test :refer :all]
+    [clojure.test :refer [deftest is testing]]
     [com.stuartsierra.component :as component]))
 
 
@@ -20,7 +20,7 @@
     :rmq-connection (connection/create rabbit-config)
     :publisher (component/using
                  ;; will use default-exchange ""
-                 (create {})
+                 (publisher/create {})
                  [:rmq-connection])))
 
 

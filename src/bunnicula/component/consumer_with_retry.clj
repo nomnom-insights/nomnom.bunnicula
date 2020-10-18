@@ -2,7 +2,6 @@
   (:require
     [bunnicula.client.rabbitmq.channel :as channel]
     [bunnicula.client.rabbitmq.consumer :as consumer]
-    [bunnicula.consumer :as bc]
     [bunnicula.protocol :as protocol]
     [bunnicula.utils :as utils]
     [clojure.tools.logging :as log]
@@ -141,7 +140,7 @@
        In case of exception => retry if allowed otherwise push to error queue"
   [channel consumer]
   (fn [envelope properties body]
-    (let [{:keys [options message-handler-fn handler monitoring deserializer]} consumer
+    (let [{:keys [options message-handler-fn monitoring deserializer]} consumer
           {:keys [parsed deserialize-error]} (deserialize deserializer body)
           ;; pass all message data required for processing in single map
           message (format-message-data {:channel channel
@@ -160,22 +159,22 @@
                          :timeout
                          (message-handler-fn body parsed envelope consumer)))]
             (case res
-              (:ack  ::bc/ack)
+              (:ack  :bunnicula.consumer/ack)
               (do
                 (protocol/on-success monitoring message)
                 (ack message))
 
-              (:error ::bc/error)
+              (:error :bunnicula.consumer/error)
               (do
                 (protocol/on-error monitoring message)
                 (nack-error message))
 
-              (:retry ::bc/retry)
+              (:retry :bunnicula.consumer/retry)
               (do
                 (protocol/on-retry monitoring message)
                 (handle-failure message "retry"))
 
-              (:timeout ::bc/timeout)
+              (:timeout :bunnicula.consumer/timeout)
               (do
                 (protocol/on-timeout monitoring message)
                 (handle-failure message "timeout"))))
