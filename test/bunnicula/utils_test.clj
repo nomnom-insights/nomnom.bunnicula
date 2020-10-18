@@ -1,7 +1,7 @@
 (ns bunnicula.utils-test
   (:require
     [bunnicula.utils :as bu]
-    [clojure.test :refer [deftest thrown-with-msg? is testing]]))
+    [clojure.test :refer :all]))
 
 
 (deftest time-limited-test
