@@ -42,7 +42,7 @@ A Clojure RabbitMQ client.
         - [Exchanges and Queues](#exchanges-and-queues)
         - [Component dependencies](#component-dependencies)
         - [Configuration](#configuration-2)
-            - [message-handler-fn <a name="handler-fn"></a>](#message-handler-fn-a-namehandler-fna)
+            - [handler <a name="handler-fn"></a>](#handler-a-namehandler-fna)
         - [Usage](#usage-3)
         - [Monitoring for consumer<a name="monitoring"></a>](#monitoring-for-consumera-namemonitoringa)
     - [Base monitoring component <a name="base-monitoring-component"></a>](#base-monitoring-component-a-namebase-monitoring-componenta)
@@ -279,7 +279,7 @@ The [connection component](#connection-component-) and [monitoring component](#b
 ### Configuration
 
 
-- `message-handler-fn` handler fn for consumer, holds the application logic,
+- `handler` handler fn for consumer, holds the application logic,
 see more [here](#handler-fn-)
 - `deserializer` (optional, default is json deserialization)
 function to be used to deserializer messages
@@ -288,12 +288,12 @@ function to be used to deserializer messages
   - `exchange-name` exchange which queue will be bind to using queue-name as routing-key
  (exchange needs to be already created, you can use default RabbitMQ exchange '')
   - `max-retries` (optional, default 3) how many times should be message retried
-  - `timeout-seconds` (optional, default 60s)  timeout for message-handler-fn
+  - `timeout-seconds` (optional, default 60s)  timeout for handler
   - `backoff-interval-seconds` (optional, default 60s) how long should message wait on retry queue
   - `consumer-threads` (optional, default 4) how many consumers should be created, allows parallel processing
   - `prefetch-count` (optional, default 10) how many messages should be prefetched by each consumer
 
-#### message-handler-fn <a name="handler-fn"></a>
+#### handler <a name="handler-fn"></a>
 
 handler-fn takes 4 arguments
 
@@ -353,7 +353,7 @@ The envelope is a map of:
 (def connection (connection/create {:url "amqp://rabbit:password@127.0.0.1:5672"
                                     :vhost "/main"}))
 
-(def consumer (consumer/create {:message-handler-fn import-conversation-handler
+(def consumer (consumer/create {:handler import-conversation-handler
                                 :options {:queue-name "some.queue"
                                           :exchange-name "my-exchange"
                                           :timeout-seconds 120
@@ -388,7 +388,7 @@ which will track consumer metrics and send those to StatsD and report exceptions
 
 Provides basic monitoring functionality for [consumer component](#consumer-component)
 
-It logs the result of consumer's `message-handler-fn` using `clojure.tools.logging`.
+It logs the result of consumer's `handler` using `clojure.tools.logging`.
 
 ### Example custom monitoring component
 

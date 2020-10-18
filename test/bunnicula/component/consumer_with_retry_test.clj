@@ -68,7 +68,7 @@
     :mock-consumer (component/using
                      (create
                        {:options queue-options
-                        :message-handler-fn message-handler-fn})
+                        :handler message-handler-fn})
                      ;; those to are required dependencies
                      {:rmq-connection :rmq-connection
                       :monitoring :mock-monitoring

@@ -141,7 +141,7 @@
        In case of exception => retry if allowed otherwise push to error queue"
   [channel consumer]
   (fn [envelope properties body]
-    (let [{:keys [options message-handler-fn monitoring deserializer]} consumer
+    (let [{:keys [options message-handler-fn handler monitoring deserializer]} consumer
           {:keys [parsed deserialize-error]} (deserialize deserializer body)
           ;; pass all message data required for processing in single map
           message (format-message-data {:channel channel
@@ -323,14 +323,14 @@
 
 
 (defn create
-  [{:keys [options message-handler-fn deserializer]}]
-  {:pre [(fn? message-handler-fn)
+  [{:keys [options message-handler-fn handler deserializer]}]
+  {:pre [(or (fn? handler) (fn? message-handler-fn))
          ;; ensure required keys for options are present
          (string? (:queue-name options))
          (string? (:exchange-name options))
          ;; ensure no invalid key is passed in options (avoid typos in config etc.)
          (every? #(contains? allowed-options-keys %) (keys options))]}
   (map->RetryConsumer
-    {:message-handler-fn message-handler-fn
+    {:message-handler-fn (or handler message-handler-fn)
      :deserializer (or deserializer utils/json-deserializer)
      :options (set-defaults options)}))
