@@ -5,7 +5,10 @@
     [bunnicula.protocol :as protocol]
     [bunnicula.utils :as utils]
     [clojure.tools.logging :as log]
-    [com.stuartsierra.component :as component]))
+    [com.stuartsierra.component :as component])
+  (:import
+    (com.rabbitmq.client
+      BasicProperties)))
 
 
 (defn- retry-queue [qname]
@@ -20,8 +23,8 @@
   (format "%s-retry-requeue" qname))
 
 
-(defn- get-retry-attemps [properties]
-  (get (:headers properties) "retry-attempts" 0))
+(defn- get-retry-attemps [{:keys [headers] :as properties}]
+  (get headers "retry-attempts" 0))
 
 
 (defn- ack

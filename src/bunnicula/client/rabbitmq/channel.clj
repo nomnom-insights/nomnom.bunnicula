@@ -106,4 +106,4 @@
    - skip for default exchange ''"
   [channel {:keys [queue exchange routing-key]}]
   (when-not (empty? exchange)
-    (.queueBind channel queue exchange (or routing-key default-routing-key) nil)))
+    (.queueBind ^Channel channel queue exchange (or routing-key default-routing-key) nil)))

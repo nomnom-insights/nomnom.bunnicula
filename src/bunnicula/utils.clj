@@ -29,17 +29,15 @@
 
 
 (defn- to-string [body]
-  (String. body "UTF-8"))
+  (String. ^bytes body "UTF-8"))
 
 
 (defn json-serializer [message]
-  (-> message
-      json/generate-string
-      (.getBytes)))
+  (let [json  (json/generate-string message)]
+    (.getBytes ^String json)))
 
 
 (defn json-deserializer [body]
   (-> body
       to-string
       (json/parse-string true)))
-
