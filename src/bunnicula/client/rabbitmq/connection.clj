@@ -1,5 +1,9 @@
 (ns bunnicula.client.rabbitmq.connection
-  (:import (com.rabbitmq.client Connection ConnectionFactory)))
+  (:import
+    (com.rabbitmq.client
+      Connection
+      ConnectionFactory)))
+
 
 (defn create
   "Create rabbit connection for given rmq url
@@ -9,6 +13,7 @@
   (let [factory (ConnectionFactory.)]
     (.setUri factory rmq-url)
     (.newConnection factory ^String connection-name)))
+
 
 (defn close
   [^Connection conn]

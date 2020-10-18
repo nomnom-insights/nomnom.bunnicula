@@ -1,6 +1,8 @@
 (ns bunnicula.utils-test
-  (:require [bunnicula.utils :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+    [bunnicula.utils :refer :all]
+    [clojure.test :refer :all]))
+
 
 (deftest time-limited-test
   (testing "result of body gets return when not timeout"

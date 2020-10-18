@@ -1,5 +1,11 @@
 (ns bunnicula.client.rabbitmq.consumer
-  (:import (com.rabbitmq.client BasicProperties Envelope Channel Consumer)))
+  (:import
+    (com.rabbitmq.client
+      BasicProperties
+      Channel
+      Consumer
+      Envelope)))
+
 
 (defn- envelope-to-map
   [^Envelope envelope]
@@ -7,6 +13,7 @@
    :exchange     (.getExchange envelope)
    :redelivered? (.isRedeliver envelope)
    :delivery-tag (.getDeliveryTag envelope)})
+
 
 (defn- properties-to-map
   [^BasicProperties properties]
@@ -23,6 +30,7 @@
    :timestamp        (.getTimestamp properties)
    :type             (.getType properties)
    :user-id          (.getUserId properties)})
+
 
 (defn- consumer-from-handler
   "Generate a consumer for the given consumable based on the given message-handler.
@@ -42,9 +50,11 @@
         (properties-to-map properties)
         body))))
 
+
 (defn consume [channel qname message-handler]
   (let [consumer (consumer-from-handler message-handler)]
     (.basicConsume ^Channel channel qname consumer)))
+
 
 (defn cancel [^Channel channel ^String consumer-tag]
   (.basicCancel channel consumer-tag))

@@ -1,6 +1,8 @@
 (ns bunnicula.component.monitoring
-  (:require [bunnicula.protocol :as protocol]
-            [clojure.tools.logging :as log]))
+  (:require
+    [bunnicula.protocol :as protocol]
+    [clojure.tools.logging :as log]))
+
 
 (defn- trim-message
   ([message]
@@ -8,6 +10,7 @@
   ([message size]
    (let [s (str message)]
      (subs s 0 (min size (count s))))))
+
 
 (def BaseMonitoring
   (reify

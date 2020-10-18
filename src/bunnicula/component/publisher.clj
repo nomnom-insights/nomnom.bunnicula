@@ -1,10 +1,11 @@
 (ns bunnicula.component.publisher
   (:require
-    [clojure.tools.logging :as log]
-    [com.stuartsierra.component :as component]
     [bunnicula.client.rabbitmq.channel :as channel]
     [bunnicula.protocol :as protocol]
-    [bunnicula.utils :as utils]))
+    [bunnicula.utils :as utils]
+    [clojure.tools.logging :as log]
+    [com.stuartsierra.component :as component]))
+
 
 (defrecord Publisher [rmq-connection channel serializer exchange-name]
   component/Lifecycle
@@ -41,6 +42,7 @@
       ;; channel should be always available thanks to auto-recovery!
       (throw (ex-info "channel-not-available" {:channel channel
                                                :name name})))))
+
 
 (defn create
   "Create publisher using serializer fn to convert clojure structure to RMQ message.

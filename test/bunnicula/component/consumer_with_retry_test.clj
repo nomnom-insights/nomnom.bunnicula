@@ -1,18 +1,23 @@
 (ns bunnicula.component.consumer-with-retry-test
-  (:require [clojure.test :refer :all]
-            [bunnicula.component.consumer-with-retry :refer :all]
-            [com.stuartsierra.component :as component]
-            [bunnicula.component.connection :as connection]
-            [bunnicula.component.publisher :as publisher]
-            [bunnicula.protocol :as protocol]
-            [bunnicula.component.monitoring :as mon])
-  (:import (com.rabbitmq.client Channel)))
+  (:require
+    [bunnicula.component.connection :as connection]
+    [bunnicula.component.consumer-with-retry :refer :all]
+    [bunnicula.component.monitoring :as mon]
+    [bunnicula.component.publisher :as publisher]
+    [bunnicula.protocol :as protocol]
+    [clojure.test :refer :all]
+    [com.stuartsierra.component :as component])
+  (:import
+    (com.rabbitmq.client
+      Channel)))
+
 
 (def rabbit-config
   {:url (or (System/getenv "RABBIT_URL")
-               "amqp://rabbit:password@127.0.0.1:5672")
+            "amqp://rabbit:password@127.0.0.1:5672")
    :vhost (or (System/getenv "RABBIT_VHOST")
               "%2Fmain")})
+
 
 (def queue-options
   {:queue-name "test.bunnicula"
@@ -22,14 +27,18 @@
    :backoff-interval-seconds 0.1
    :consumer-threads 3})
 
+
 (def test-queue-2
   (assoc queue-options :queue-name "test.bunnicula.fail"))
 
+
 (def test-results (atom {}))
+
 
 (defn inc-test-result [key]
   (swap! test-results
          #(update % key (fn [r] (if r (inc r) 1)))))
+
 
 (defn message-handler-fn
   [payload message envelope consumer-system]
@@ -44,6 +53,7 @@
     "error" (throw (ex-info "EXPECTED" {}))
     "timeout" (Thread/sleep 300)))
 
+
 (def test-system
   (component/system-map
     :rmq-connection (connection/create rabbit-config)
@@ -51,8 +61,8 @@
                  (publisher/create {})
                  [:rmq-connection])
     :publisher-broken (component/using
-                      (publisher/create {:serializer (fn [& _] (.getBytes "{not json}<>") )})
-                      [:rmq-connection])
+                        (publisher/create {:serializer (fn [& _] (.getBytes "{not json}<>"))})
+                        [:rmq-connection])
     :dependency "I AM DEPENDENCY"
     :mock-monitoring mon/BaseMonitoring
     :mock-consumer (component/using
@@ -66,12 +76,13 @@
                       :dependency :dependency})
 
     :mock-consumer-2 (component/using
-                      (create {:options test-queue-2
-                               :message-handler-fn message-handler-fn})
-                      {:rmq-connection :rmq-connection
-                      :monitoring :mock-monitoring
+                       (create {:options test-queue-2
+                                :message-handler-fn message-handler-fn})
+                       {:rmq-connection :rmq-connection
+                        :monitoring :mock-monitoring
                       ;; will be passed to message-handler
-                       :dependency :dependency})))
+                        :dependency :dependency})))
+
 
 (deftest message-handler-test
   (let [system (atom test-system)
@@ -112,6 +123,7 @@
         (is (= 3 (get @test-results "timeout")))))
     (swap! system component/stop)))
 
+
 (deftest consumer-system-test
   (testing "consumer-system-test"
     (let [system (atom test-system)]
@@ -142,11 +154,12 @@
   (on-retry [this args]
     (swap! counter #(update % :retry inc))))
 
+
 (deftest consumer-monitoring-test
   (testing "consumer-monitoring-test"
     (let [counter (atom {:ok 0 :fail 0 :retry 0 :timeout 0 :error 0})
           test-system (assoc test-system
-                        :mock-monitoring (->Monitoring counter))
+                             :mock-monitoring (->Monitoring counter))
           system (atom test-system)]
       (swap! system component/start)
       (testing "ok"
@@ -154,7 +167,7 @@
         (Thread/sleep 200)
         (is (= 1 (:ok @counter))))
       (testing "timeout"
-        (protocol/publish(:publisher @system) "test.bunnicula" "timeout" )
+        (protocol/publish (:publisher @system) "test.bunnicula" "timeout")
         (Thread/sleep 900)
         (is (= 3 (:timeout @counter))))
       (swap! system component/stop))))

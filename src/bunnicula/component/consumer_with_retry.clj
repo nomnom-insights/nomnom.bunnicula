@@ -1,31 +1,39 @@
 (ns bunnicula.component.consumer-with-retry
-  (:require [bunnicula.utils :as utils]
-            [bunnicula.consumer :as bc]
-            [bunnicula.protocol :as protocol]
-            [bunnicula.client.rabbitmq.channel :as channel]
-            [bunnicula.client.rabbitmq.consumer :as consumer]
-            [clojure.tools.logging :as log]
-            [com.stuartsierra.component :as component]))
+  (:require
+    [bunnicula.client.rabbitmq.channel :as channel]
+    [bunnicula.client.rabbitmq.consumer :as consumer]
+    [bunnicula.consumer :as bc]
+    [bunnicula.protocol :as protocol]
+    [bunnicula.utils :as utils]
+    [clojure.tools.logging :as log]
+    [com.stuartsierra.component :as component]))
+
 
 (defn- retry-queue [qname]
   (format "%s-retry" qname))
 
+
 (defn- error-queue [qname]
   (format "%s-error" qname))
+
 
 (defn- retry-requeue [qname]
   (format "%s-retry-requeue" qname))
 
+
 (defn- get-retry-attemps [properties]
   (get (:headers properties) "retry-attempts" 0))
+
 
 (defn- ack
   [{:keys [channel envelope]}]
   (channel/ack-message channel (:delivery-tag envelope)))
 
+
 (defn- to-ms
   [seconds]
   (int (* 1000 seconds)))
+
 
 (defn- nack
   "Remove message from queue (ACK) and push to exchange
@@ -52,6 +60,7 @@
       (log/error e)
       (channel/nack-message channel (:delivery-tag envelope)))))
 
+
 (defn- nack-error
   [{:keys [channel body envelope queue-name retry-attempts]}]
   (nack {:channel channel
@@ -59,6 +68,7 @@
          :envelope envelope
          :exchange (error-queue queue-name)
          :current-retry retry-attempts}))
+
 
 (defn- nack-retry
   [{:keys [channel body envelope queue-name retry-attempts expiry-time-ms]}]
@@ -69,12 +79,14 @@
          :current-retry retry-attempts
          :expiry-time-ms expiry-time-ms}))
 
+
 (defn- deserialize
   [deserializer body]
   (try
     {:parsed (deserializer body)}
     (catch Exception err
       {:deserialize-error err})))
+
 
 (defn- handle-deserialize-error
   [monitoring deserialize-error {:keys [queue-name] :as message}]
@@ -84,6 +96,7 @@
                     deserialize-error)]
     (protocol/on-exception monitoring (assoc message :exception exception))
     (nack-error message)))
+
 
 (defn- handle-failure
   [{:keys [retry-attempts queue-name max-retries] :as message}
@@ -98,6 +111,7 @@
                   queue-name reason)
       (nack-error message))))
 
+
 (defn- format-message-data
   [{:keys [channel body envelope properties parsed options]}]
   {:channel channel
@@ -110,6 +124,7 @@
    :expiry-time-ms (to-ms (:backoff-interval-seconds options))
    :properties properties
    :retry-attempts (get-retry-attemps properties)})
+
 
 (defn- create-message-handler
   "Create message-handler using given channel, queue options
@@ -169,6 +184,7 @@
             (protocol/on-exception monitoring (assoc message :exception e))
             (handle-failure message "exception")))))))
 
+
 (defn- consume [channel consumer]
   (let [message-handler (create-message-handler channel consumer)
         queue-name (get-in consumer [:options :queue-name])]
@@ -211,7 +227,7 @@
     (channel/declare-exchange ch {:options {:durable true
                                             :auto-delete false}
                                   :name queue-name-error
-                                  :type "topic" })
+                                  :type "topic"})
 
     (log/infof "declare requeue-exchange name=%s" exch-requeue)
     (channel/declare-exchange ch {:options {:durable false
@@ -227,7 +243,7 @@
     (log/infof "declare retry-queue name=%s" queue-name-retry)
     (channel/declare-queue ch {:options (assoc default-queue-options
                                           ;; setup DLE for retry queue
-                                          :arguments {"x-dead-letter-exchange" exch-requeue})
+                                               :arguments {"x-dead-letter-exchange" exch-requeue})
                                :name queue-name-retry})
 
     (log/infof "declare error-queue name=%s" queue-name-error)
@@ -272,9 +288,9 @@
                             #(consume % this)
                             consumer-channels)]
         (assoc this
-          :consumer-channels consumer-channels
-          :consumer-tags consumer-tags
-          :channel ch))))
+               :consumer-channels consumer-channels
+               :consumer-tags consumer-tags
+               :channel ch))))
 
   (stop [this]
     (log/infof "retry-consumer stop name=%s" (:queue-name options))
@@ -285,9 +301,9 @@
       (channel/close channel))
     ;; reset consumer
     (assoc this
-      :channel nil
-      :consumer-tags nil
-      :consumer-channels nil)))
+           :channel nil
+           :consumer-tags nil
+           :consumer-channels nil)))
 
 ;; ======= setup function ===========
 (def default-options
@@ -297,11 +313,14 @@
    :prefetch-count 10
    :consumer-threads 4})
 
+
 (def allowed-options-keys
   (conj (set (keys default-options)) :exchange-name :queue-name))
 
+
 (defn- set-defaults [options]
   (merge default-options options))
+
 
 (defn create
   [{:keys [options message-handler-fn deserializer]}]

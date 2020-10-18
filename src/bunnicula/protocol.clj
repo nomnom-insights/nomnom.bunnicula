@@ -1,5 +1,6 @@
 (ns bunnicula.protocol)
 
+
 (defprotocol Monitoring
   (with-tracking [this args]
     "Should evaluate body. Can add time tracking etc.")
