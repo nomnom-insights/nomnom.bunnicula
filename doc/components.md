@@ -279,9 +279,17 @@ handler-fn takes 4 arguments
 
 handler-fn is required to return one of following values
 
-- `:ack` message was processed successfully
-- `:retry` recoverable failure => retry message
-- `:error` hard failure => no retry
+- `:ack -` message was processed successfully
+- `:retry` - recoverable failure => retry message automatically
+- `:error` - hard failure => no retry, send to dead-letter queue
+- `:timeout` - consumption timed out, will be retried but also logs/records timeout specific metrics
+
+Note that you can use namespaced versions of these keywords:
+
+- `:bunnicula.consumer/ack`
+- `:bunnicula.consumer/error`
+
+and so on.
 
 ``` clojure
 (defn handler-fn [body parsed envelope components]

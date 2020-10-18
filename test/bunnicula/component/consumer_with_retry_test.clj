@@ -37,7 +37,7 @@
   (case message
     "ok" (if (= (:dependency consumer-system) "I AM DEPENDENCY")
            ;; if dependency present as expected :ack message
-           :ack
+           :bunnicula.consumer/ack
            (throw (ex-info "UNEXPECTED" {})))
     "fail" :error
     "reject" :retry

@@ -1,5 +1,6 @@
 (ns bunnicula.component.consumer-with-retry
   (:require [bunnicula.utils :as utils]
+            [bunnicula.consumer :as bc]
             [bunnicula.protocol :as protocol]
             [bunnicula.client.rabbitmq.channel :as channel]
             [bunnicula.client.rabbitmq.consumer :as consumer]
@@ -117,10 +118,10 @@
    which will be used by queue consumer.
    1.) call 'on-message' method with time limit
    2.) further processing depends on response value
-       - :ack => ack message
-       - :error =>  pushed to error queue
-       - :retry =>  retry if allowed otherwise push to error queue
-       - :timeout (return if message timeouts) => retry if allowed
+       - :ack / :bunnicula.consumer/ack : => ack message
+       - :error / :bunnicula.consumer/error =>  pushed to error queue
+       - :retry / :bunnicula.consumer/retry  =>  retry if allowed otherwise push to error queue
+       - :timeout / :bunnicula.consumer/timeout =>  (return if message timeouts) => retry if allowed
          otherwise push to error queue
        In case of exception => retry if allowed otherwise push to error queue"
   [channel consumer]
@@ -144,22 +145,22 @@
                          :timeout
                          (message-handler-fn body parsed envelope consumer)))]
             (case res
-              :ack
+              (:ack  ::bc/ack)
               (do
                 (protocol/on-success monitoring message)
                 (ack message))
 
-              :error
+              (:error ::bc/error)
               (do
                 (protocol/on-error monitoring message)
                 (nack-error message))
 
-              :retry
+              (:retry ::bc/retry)
               (do
                 (protocol/on-retry monitoring message)
                 (handle-failure message "retry"))
 
-              :timeout
+              (:timeout ::bc/timeout)
               (do
                 (protocol/on-timeout monitoring message)
                 (handle-failure message "timeout"))))
@@ -236,10 +237,10 @@
     ;; BIND QUEUES
     ;; bind main queue to configured exchange, routing-key is name of the queue
     (channel/bind-queue ch {:queue queue-name
-                            :exchange exchange-name 
+                            :exchange exchange-name
                             :routing-key queue-name})
     ;; bind main queue to requeue-exchange, using default routing key #
-    (channel/bind-queue ch {:queue queue-name 
+    (channel/bind-queue ch {:queue queue-name
                             :exchange exch-requeue})
     ;; bind error queue to error-exchange, using default routing key #
     (channel/bind-queue ch {:queue queue-name-error
