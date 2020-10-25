@@ -23,16 +23,16 @@ A Clojure RabbitMQ client.
 - [bunnicula](#bunnicula)
     - [Installation](#installation)
     - [Usage](#usage)
-        - [RabbitMQ implementation details](#rabbitmq-implementation-details)
-            - [RabbitMQ best practices](#rabbitmq-best-practices)
-            - [Automatic recovery](#automatic-recovery)
-            - [Durability](#durability)
+    - [RabbitMQ implementation details](#rabbitmq-implementation-details)
+        - [-](#-)
+        - [Automatic recovery](#automatic-recovery)
+        - [Durability](#durability)
 - [Components](#components)
     - [Connection component <a name="connection-component"></a>](#connection-component-a-nameconnection-componenta)
         - [Configuration](#configuration)
         - [Usage](#usage-1)
         - [Mock publisher](#mock-publisher)
-    - [Consumer with retry component <a name="consumer-component"></a>](#consumer-with-retry-component-a-nameconsumer-componenta)
+    - [Consumer component <a name="consumer-component"></a>](#consumer-component-a-nameconsumer-componenta)
         - [Message flow](#message-flow)
         - [Exchanges and Queues](#exchanges-and-queues)
         - [Component dependencies](#component-dependencies)
@@ -51,24 +51,24 @@ A Clojure RabbitMQ client.
 <!-- markdown-toc end -->
 
 
-Buniccula is framework for asynchronous messaging with RabbitMQ.
+Bunnicula is framework for building asynchronous workflows with RabbitMQ.
 
 It defines 4 components (based on [Stuart Sierra's component lib](https://github.com/stuartsierra/component))
 
-- connection
-- publisher
-- consumer
-- base monitoring
+- connection - representing a per-service instance RabbitMQ connection
+- publisher - for publishing jobs to queues, usually 1 per service instance
+- consumer - for consuming jobs from a queue, a service usually defines multiple ones, consuming jobs from multiple queues. Consumers can also run concurrently, e.g. spin up N consumer threads to pull jobs of the queue
+- monitoring - a consumer monitoring component which reports all aspects of the consumer lifecycle (in basic form, it will log all consumer operations)
 
-### RabbitMQ implementation details
+## RabbitMQ implementation details
 
 #### RabbitMQ best practices
 
 Bunnicula follows the RabbitMQ best practices, inspired by following blog posts.
-- [mike hadlow RabbitMQ best practices](http://mikehadlow.blogspot.com/2013/09/rabbitmq-amqp-channel-best-practices.html)
-- [cloudamqp RabbitMQ best practices](https://www.cloudamqp.com/blog/2017-12-29-part1-rabbitmq-best-practice.html)
+- [Mike Hadlow's RabbitMQ best practices](http://mikehadlow.blogspot.com/2013/09/rabbitmq-amqp-channel-best-practices.html)
+- [CloudAMQP RabbitMQ best practices](https://www.cloudamqp.com/blog/2017-12-29-part1-rabbitmq-best-practice.html)
 
-See the relevant practices implemented in Bunnicula
+Relevant practices and patterns implemented in Bunnicula:
 
 - Channels and connections are opened/closed only at application startup time
 (or during auto-recovery)
@@ -77,6 +77,7 @@ See the relevant practices implemented in Bunnicula
 - Consuming channel is not used for publishing
 - Consumers don't have an unlimited prefetch value (default value is set to 10)
 - An ACK is invoked on the same channel on which the delivery was received
+- All messages are persistent, all queues are durable
 
 #### Automatic recovery
 
@@ -87,7 +88,7 @@ As of version 4.0.0 of the Java client, automatic recovery is enabled by default
 
 #### Durability
 
-By default we ensure your data will survive server restart.
+By default we ensure your queue data will survive RabbitMQ server restart.
 
 All queues defined by consumer component are durable.
 Publisher component publishes persistent message by default.
@@ -95,17 +96,20 @@ Publisher component publishes persistent message by default.
 # Components
 
 ## Connection component <a name="connection-component"></a>
+
 Connection component represents RabbitMQ connection.
 When component is started, new RabbitMQ connection is opened.
-When component is closed, connection is closed!
+When component is stopped, connection is closed!
 
-Connection component is used by publisher & consumers as component dependency!
+Connection component is **a required dependency** by the publisher & consumer components, under the `rmq-connection` key in your system.
+
 
 ### Configuration
+
 - server params can be specified either via map full `url` key
 or by map with `host`, `port`, `username` and `password` keys
-- `vhost` is always required to be present in configuration
-- optionally user can specify `connection-name`
+- `vhost` is always required to be present in configuration, default is "/"
+- optionally user can specify `connection-name` - this is a recommended setting if you have multiple applications connecting to the same RabbitMQ server
 
 ### Usage
 
@@ -128,27 +132,30 @@ or by map with `host`, `port`, `username` and `password` keys
 (component/start connection)
 
 ```
-```
+
 
 <img src="doc/images/rmq-connection.png" height="200px" />
 
 ## Publisher component <a name="publisher-component"></a>
+
 Publisher component is used for publishing messages to the broker.
 When component is started, new channel is opened.
 When component is stopped, channel is closed.
 
-The [connection component](#connection-component-) is a required dependency, it has to be present under the rmq-connection key in the system map.
+The [connection component](#connection-component-) is a required dependency, it has to be present under the `rmq-connection` key in the system map.
+
 
 ### Configuration
-- `exchange-name` the default exchange messages will be published to
-- `serialization-fn` (optional) function used to serialize message (represented as clojure data)
- to RabbitMQ message body (bytes). Default function uses json-serialization.
 
-### Publish method
+- `exchange-name` the default exchange messages will be published to
+- `serializer` (optional) function used to serialize messages to RabbitMQ message body (bytes). Default function uses json-serialization. See `bunnicula.utils/json-serializer` for an example.
+
+### Publishing
+
 Publisher component implements publish method, which has multiple arity
 
 - `(publish publisher routing-key message)` will publish message to default exchange
-with given routing-key
+with given routing-key (queue name)
 - `(publish publisher routing-key message options)` will publish message to default exchange
 with given routing-key and options
 - `(publish publisher exchange routing-key message options)` will publish message to specified exchange
@@ -222,19 +229,19 @@ its value is added to `queues` atom
 ;;                   {:integration_id 1, :message_id "123"}]}
 ```
 
-## Consumer with retry component <a name="consumer-component"></a>
+## Consumer component <a name="consumer-component"></a>
 
 Defines consumer with auto retry functionality!
 
-The component is composed of a message handler (a plain Clojure function), consumer threads and channels.
+The component is composed of a message handler (a Clojure function), consumer threads and channels.
 When processing fails it can be retried automatically with a fixed amount of times with a delay between each attempt.
-If processing still fails - messages will be pushed to an error queue for further inspection and manual retrying.
+If processing still fails - messages will be pushed to an error queue for further inspection and manual retrying (dead lettering).
 
 When the component starts it will create necessary exchanges and queues if they do not exist.
 
 When component stops consumers are destroyed and channels are closed.
 All exchanges, queues and their messages will remain intact.
-Messages will be fetched again when the consumer reconnects.
+Messages will be fetched again when the consumer reconnects as per the pre-fetch setting.
 
 ### Message flow
 
@@ -242,12 +249,15 @@ Processing message on consumer can result in one of following results
 
 1. **success** => ACK message on original queue
 2. **hard failure** => ACK message on original queue and push message to error queue
-3. **recoverable failure** => ACK message on original queue and push message to retry queue
-to be processed later
+3. **recoverable failure** => ACK message on original queue and push message to retry queue to be processed later
 
 <img src="doc/images/message-flow.png" width="800" />
 
 ### Exchanges and Queues
+
+
+> :warning: If using non-default exchange, the main exchange used by regular work queues (not retry/error) has to be created before starting the consumer.
+>  Only retry and error exchanges are created by the consumer component.
 
 Assume configured queue-name is `some.queue`.
 Following exchanges are declared when component is started
@@ -257,15 +267,16 @@ Following exchanges are declared when component is started
 
 Following queues are declared when component is started
 
-- **main queue** with name `some.queue`  which is bind to pre-configured exchange via 'some.queue' routing key (routing-key=queue-name)
-- **retry queue** with name `some.queue-retry` which is bind to retry exchange via '#' routing key,
+- **main queue** with name `some.queue`  which is bound to the pre-configured exchange via 'some.queue' routing key (routing-key is usually the queue name)
+- **retry queue** with name `some.queue-retry` which is bound to retry exchange via '#' routing key,
 expired messages are sent to dead letter exchange `some.queue-requeue`
-- **error queue** with name `some.queue-error` which is bind to error exchange via '#' routing key
+- **error queue** with name `some.queue-error` which is bound to error exchange via '#' routing key
 
-Note all queues are durable and publishing messages between queues ensure they are persisted on disk.
+Note all queues are durable and publishing messages between queues ensures they are persisted on disk. This also means that all messages will survive the server and consumer restarts.
 
-> ⚠️  Main exchange used by regular work queues (not retry/error) has to be created before starting the consumer.
- Only retry and error exchanges are created by the consumer component.
+> :warning: You have to take care of garbage collecting failed messages - either reprocessing them again by moving the messages back to the main queue by using the RabbitMQ shovel plugin or purging the queue. Accumulating failed messages will offload them to the disk, but will eventually bloat RabbitMQ's memory!
+
+
 
 <p float="left">
   <img src="doc/images/rmq-exchanges.png" width="400" />
@@ -274,8 +285,8 @@ Note all queues are durable and publishing messages between queues ensure they a
 
 
 ### Component dependencies
-The [connection component](#connection-component-) and [monitoring component](#base-monitoring-component-) are required dependencies,
- it has to be present under `:rmq-connection` and `:monitoring` key in the system map.
+
+The [connection component](#connection-component-) and [monitoring component](#base-monitoring-component-) are required dependencies. Both have to be present under `:rmq-connection` and `:monitoring` key in the component dependency list. You can use aliases to avoid name clashes.
 
 
 ### Configuration
@@ -287,10 +298,9 @@ see more [here](#handler-fn-)
 function to be used to deserializer messages
 - `options`
   - `queue-name` queue for consuming messages
-  - `exchange-name` exchange which queue will be bind to using queue-name as routing-key
- (exchange needs to be already created, you can use default RabbitMQ exchange '')
+  - `exchange-name` exchange which queue will be bind to using queue-name as routing-key (exchange needs to be already created, you can use default RabbitMQ exchange `""`)
   - `max-retries` (optional, default 3) how many times should be message retried
-  - `timeout-seconds` (optional, default 60s)  timeout for handler
+  - `timeout-seconds` (optional, default 60s)  timeout for handler, if handler execution exceeds the timeout it will be terminated and treated as a retry
   - `backoff-interval-seconds` (optional, default 60s) how long should message wait on retry queue
   - `consumer-threads` (optional, default 4) how many consumers should be created, allows parallel processing
   - `prefetch-count` (optional, default 10) how many messages should be prefetched by each consumer
@@ -319,7 +329,7 @@ Note that you can use non-namespaced versions of these keywords  - these will be
 - `:timeout`
 
 
-:warning: If it returns *anything else* it will be considered a failure and the job will be retried!
+> :warning: If it returns *anything else than the keywords listed above* it will be considered a failure and the job will be retried!
 
 
 A simpler handler looks like this:
@@ -342,8 +352,24 @@ The envelope is a map of:
 
 (see the [JavaDoc](https://www.rabbitmq.com/releases/rabbitmq-java-client/v2.4.1/rabbitmq-java-client-javadoc-2.4.1/index.html?com/rabbitmq/client/Envelope.html) for details)
 
+In typical scenario you can ignore the raw body and envelope arguments, as focus on the business logic.
+Example handler for sending email notifications:
+
+
+```clojure
+
+(defn send-email [_ {:keys [to subject content]}
+                  _ {:keys [email-sender]}]
+  (email/send email-sender {:to to
+                            :subject subject
+                            :html content
+                            :plain-text (util/make-plain-test content)})
+  :bunnicula.consumer/ack)
+```
+
 
 ### Usage
+
 
 ```clojure
 (require '[bunnicula.component.connection :as connection]
@@ -371,11 +397,17 @@ The envelope is a map of:
 
 (def system (-> (component/system-map
                   :rmq-connection connection
-                  :monitoring monitoring/BaseMonitoring
+                  :publisher (component/using
+                               (publisher/create)
+                               [:rmq-connection])
+                  :monitoring (monitoring/create)
                   :consumer (component/using
                               consumer
                               [:rmq-connection :monitoring]))
                 component/start-system))
+
+;; publish
+(bunnicula.protocol/publish (:publisher system) "some.queue" {:integration_id 123 :message_id 2334})
 ```
 
 ### Monitoring for consumer<a name="monitoring"></a>
@@ -386,11 +418,11 @@ Monitoring component is a required dependency for the consumer component
 Bunnicula provides a basic [monitoring component](#base-monitoring-component-).
 If you require more advanced monitoring functionality you can also implement your own.
 
-The component needs to implement all methods from [Monitoring protocol](../src/bunnicula/protocol.clj)
+The component needs to implement all methods from [Monitoring protocol](src/bunnicula/protocol.clj)
 and support [component lifecycle](https://github.com/stuartsierra/component#creating-components)
 
-You can also use [bunnicula.monitoring component](https://github.com/nomnom-insights/nomnom.bunnicula.monitoring),
-which will track consumer metrics and send those to StatsD and report exceptions to Rollbar.
+You can also use a production-ready [bunnicula.monitoring component](https://github.com/nomnom-insights/nomnom.bunnicula.monitoring),
+which will track consumer metrics and send those to StatsD and report exceptions to [Rollbar](https://rollbar.com).
 
 ## Base monitoring component <a name="base-monitoring-component"></a>
 
@@ -445,7 +477,7 @@ You can completely override metrics and error reporting backends and call their 
 
 # Full example
 
-See [doc/example.clj](full example of a component system with a publisher, monitoring and a consumer).
+See a [full example of a component system with a publisher, monitoring and a consumer](doc/example.clj).
 
 # Release notes
 
