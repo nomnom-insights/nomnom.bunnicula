@@ -454,6 +454,9 @@ See [doc/example.clj](full example of a component system with a publisher, monit
 - more flexible configuration, with somewhat better option names
 - updated dependencies
 - support for namespaced keywords as return values of consumer handlers
+- fixed reflection warnings
+- documentation improvements
+- reformatted & linted code
 
 ## v2.1.0 (18.4.2019)
 
