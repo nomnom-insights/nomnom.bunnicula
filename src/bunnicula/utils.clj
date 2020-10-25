@@ -3,6 +3,7 @@
     [cheshire.core :as json])
   (:import
     (java.util.concurrent
+      Future
       TimeUnit
       TimeoutException)))
 
@@ -15,7 +16,7 @@
   [ms-timeout timeout-response & body]
   `(let [f# (future ~@body)]
      (try
-       (.get f# ~ms-timeout TimeUnit/MILLISECONDS)
+       (.get ^Future  f# ~ms-timeout TimeUnit/MILLISECONDS)
        ;; ensure we cancel future on timeout
        (catch TimeoutException x#
          (do

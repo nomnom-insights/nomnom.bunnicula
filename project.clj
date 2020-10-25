@@ -8,6 +8,7 @@
                  [cheshire "5.10.0"]]
   :deploy-repositories {"clojars" {:sign-releases false}}
   :min-lein-version "2.5.0"
+  :global-vars {*warn-on-reflection* true}
   :license {:name "MIT License"
             :url "https://opensource.org/licenses/MIT"
             :year 2018
