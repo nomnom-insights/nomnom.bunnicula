@@ -50,8 +50,10 @@
    Configurable values
    - serializer: by default json-serializer is used
    - exchange-name: by default '' is used (default rabbit exchange)"
-  [config]
+  ([]
+   (create {}))
+  ([{:keys [serializer exchange-name] :as _config}]
   ;; rmq-connection is required to be injected as dependency
-  (map->Publisher
-    {:serializer (or (:serializer config) utils/json-serializer)
-     :exchange-name (or (:exchange-name config) "")}))
+   (map->Publisher
+     {:serializer (or serializer utils/json-serializer)
+      :exchange-name (or exchange-name "")})))
