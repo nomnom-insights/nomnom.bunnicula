@@ -23,7 +23,7 @@
   (format "%s-retry-requeue" qname))
 
 
-(defn- get-retry-attemps [{:keys [headers] :as properties}]
+(defn- get-retry-attemps [^BasicProperties {:keys [headers] :as _properties}]
   (get headers "retry-attempts" 0))
 
 

@@ -2,7 +2,6 @@
   (:require
     [bunnicula.component.connection :as connection]
     [bunnicula.component.consumer-with-retry :as consumer]
-    [bunnicula.component.monitoring :as mon]
     [bunnicula.component.publisher :as publisher]
     [bunnicula.protocol :as protocol]
     [clojure.test :refer [deftest is testing use-fixtures]]
@@ -113,7 +112,7 @@
                       (reset! system (component/start test-system))
                       (try
                         (test-fn)
-                        (catch Exception e))
+                        (catch Exception _err))
                       (swap! system component/stop)))
 
 

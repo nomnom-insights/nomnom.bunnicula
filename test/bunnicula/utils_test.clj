@@ -1,7 +1,7 @@
 (ns bunnicula.utils-test
   (:require
     [bunnicula.utils :as bu]
-    [clojure.test :refer :all]))
+    [clojure.test :refer [deftest testing is]]))
 
 
 (deftest time-limited-test
