@@ -31,25 +31,22 @@ A Clojure RabbitMQ client.
     - [Connection component <a name="connection-component"></a>](#connection-component-a-nameconnection-componenta)
         - [Configuration](#configuration)
         - [Usage](#usage-1)
-    - [Publisher component <a name="publisher-component"></a>](#publisher-component-a-namepublisher-componenta)
-        - [Configuration](#configuration-1)
-        - [Publish method](#publish-method)
-            - [options](#options)
-        - [Usage](#usage-2)
         - [Mock publisher](#mock-publisher)
     - [Consumer with retry component <a name="consumer-component"></a>](#consumer-with-retry-component-a-nameconsumer-componenta)
         - [Message flow](#message-flow)
         - [Exchanges and Queues](#exchanges-and-queues)
         - [Component dependencies](#component-dependencies)
-        - [Configuration](#configuration-2)
+        - [Configuration](#configuration-1)
             - [handler <a name="handler-fn"></a>](#handler-a-namehandler-fna)
-        - [Usage](#usage-3)
+        - [Usage](#usage-2)
         - [Monitoring for consumer<a name="monitoring"></a>](#monitoring-for-consumera-namemonitoringa)
     - [Base monitoring component <a name="base-monitoring-component"></a>](#base-monitoring-component-a-namebase-monitoring-componenta)
         - [Example custom monitoring component](#example-custom-monitoring-component)
-    - [Release notes](#release-notes)
-        - [v2.1.0 (18.4.2019)](#v210-1842019)
-        - [v2.0.2 (15.9.2018)](#v202-1592018)
+- [Full example](#full-example)
+- [Release notes](#release-notes)
+    - [v2.2.0-SNAPSHOT](#v220-snapshot)
+    - [v2.1.0 (18.4.2019)](#v210-1842019)
+    - [v2.0.2 (15.9.2018)](#v202-1592018)
 
 <!-- markdown-toc end -->
 
@@ -111,6 +108,8 @@ or by map with `host`, `port`, `username` and `password` keys
 - optionally user can specify `connection-name`
 
 ### Usage
+
+
 ```clojure
 (require '[bunnicula.component.connection :as connection]
          '[com.stuartsierra.component :as component])
@@ -127,6 +126,8 @@ or by map with `host`, `port`, `username` and `password` keys
 ;;                                     :vhost "/main"}))
 
 (component/start connection)
+
+```
 ```
 
 <img src="doc/images/rmq-connection.png" height="200px" />
@@ -162,6 +163,7 @@ Following options are supported for publishing
 - `persistent` whether to persist message on disk, default true!
 
 ### Usage
+
 ```clojure
 (require '[bunnicula.component.connection :as connection]
          '[bunnicula.component.publisher :as publisher]
@@ -295,32 +297,38 @@ function to be used to deserializer messages
 
 #### handler <a name="handler-fn"></a>
 
-handler-fn takes 4 arguments
+handler function takes 4 arguments
 
-- `body` raw message data, as received by the consumer - usally `byte[]`
-- `parsed` parsed message, parsing is defined by the deserializer function - by default it's JSON. This is the payload used by the handler
+- `raw-body` raw message data, as received by the consumer - always sent as `bytes` (a byte array)
+- `deserialized-body` parsed message, parsing is defined by the deserializer function - by default it's JSON. This is the payload used by the handler
 - `envelope` message envelope
 - `components` - components which are specified as dependencies for the consumer
 
 handler-fn is required to return one of following values
 
-- `:ack -` message was processed successfully
-- `:retry` - recoverable failure => retry message automatically
-- `:error` - hard failure => no retry, send to dead-letter queue
-- `:timeout` - consumption timed out, will be retried but also logs/records timeout specific metrics
+- `:bunnicula.consumer/ack -` message was processed successfully
+- `:bunnicula.consumer/retry` - recoverable failure => retry message automatically
+- `:bunnicula.consumer/error` - hard failure => no retry, send to dead-letter queue
+- `:bunnicula.consumer/timeout` - consumption timed out, will be retried but also logs/records timeout specific metrics
 
-Note that you can use namespaced versions of these keywords  - these will be **the only accepted options in v3**.
+Note that you can use non-namespaced versions of these keywords  - these will be **the removed in v3**.
 
-- `:bunnicula.consumer/ack`
-- `:bunnicula.consumer/error`
+- `:ack`
+- `:retry`
+- `:error`
+- `:timeout`
 
-and so on.
+
+:warning: If it returns *anything else* it will be considered a failure and the job will be retried!
+
+
+A simpler handler looks like this:
 
 ``` clojure
-(defn handler-fn [body parsed envelope components]
+(defn handler-fn [raw-body deserialized-body envelope components]
  ;; ... some domain specific code ...
  ;; return supported response value
- :ack)
+ :bunnicula.consumer/ack)
 ```
 
 The envelope is a map of:
@@ -347,8 +355,8 @@ The envelope is a map of:
   [body parsed envelope components]
   (let [{:keys [integration_id message_id]} parsed]
     ;; ... import intercom conversation for given integration_id & message_id ...
-    ;; need to return :ack, :error, :retry
-    :ack))
+    ;; need to return :bunnicula.consumer/ack, :bunnicula.consumer/error, :bunnicula.consumer/retry
+    :bunnicula.consumer/ack))
 
 (def connection (connection/create {:url "amqp://rabbit:password@127.0.0.1:5672"
                                     :vhost "/main"}))
@@ -435,15 +443,24 @@ You can completely override metrics and error reporting backends and call their 
     (graphite/count graphite :fail consumer-name)))
 ```
 
+# Full example
 
-## Release notes
+See [doc/example.clj](full example of a component system with a publisher, monitoring and a consumer).
 
-### v2.1.0 (18.4.2019)
+# Release notes
+
+## v2.2.0-SNAPSHOT
+
+- more flexible configuration, with somewhat better option names
+- updated dependencies
+- support for namespaced keywords as return values of consumer handlers
+
+## v2.1.0 (18.4.2019)
 
 - update all dependencies
 - make it work with Clojure 1.10
 - *potentially breaking change* consumer config is now more strict and will throw exceptions if invalid configuration is passed
 
-### v2.0.2 (15.9.2018)
+## v2.0.2 (15.9.2018)
 
 - Open source nomnom/bunnicula library

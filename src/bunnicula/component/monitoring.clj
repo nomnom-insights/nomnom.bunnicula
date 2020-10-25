@@ -32,3 +32,7 @@
     (on-retry [this args]
       (log/errorf "consumer=%s retry attempt=%d message=%s"
                   (:queue-name args) (:retry-attempts args) (trim-message (:message args))))))
+
+
+(defn create []
+  BaseMonitoring)

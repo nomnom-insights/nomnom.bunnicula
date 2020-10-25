@@ -313,6 +313,7 @@
    :backoff-interval-seconds 60
    :timeout-seconds 60
    :prefetch-count 10
+   :exchange-name ""
    :consumer-threads 4})
 
 
@@ -329,7 +330,6 @@
   {:pre [(or (fn? handler) (fn? message-handler-fn))
          ;; ensure required keys for options are present
          (string? (:queue-name options))
-         (string? (:exchange-name options))
          ;; ensure no invalid key is passed in options (avoid typos in config etc.)
          (every? #(contains? allowed-options-keys %) (keys options))]}
   (map->RetryConsumer
