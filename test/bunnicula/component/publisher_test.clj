@@ -1,24 +1,28 @@
 (ns bunnicula.component.publisher-test
-  (:require [clojure.test :refer :all]
-            [bunnicula.component.publisher :refer :all]
-            [com.stuartsierra.component :as component]
-            [bunnicula.component.connection :as connection]
-            [bunnicula.protocol :as protocol]))
+  (:require
+    [bunnicula.component.connection :as connection]
+    [bunnicula.component.publisher :as publisher]
+    [bunnicula.protocol :as protocol]
+    [clojure.test :refer [deftest is testing]]
+    [com.stuartsierra.component :as component]))
+
 
 (def rabbit-config
   {:url (or (System/getenv "RABBIT_URL")
-               "amqp://rabbit:password@127.0.0.1:5672")
+            "amqp://rabbit:password@127.0.0.1:5672")
    :vhost (or (System/getenv "RABBIT_VHOST")
               "%2Fmain")
    :name "test-connection"})
+
 
 (def test-system
   (component/system-map
     :rmq-connection (connection/create rabbit-config)
     :publisher (component/using
                  ;; will use default-exchange ""
-                 (create {})
+                 (publisher/create {})
                  [:rmq-connection])))
+
 
 (deftest publisher-test
   (testing "publisher-test"

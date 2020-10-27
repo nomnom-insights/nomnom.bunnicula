@@ -1,6 +1,12 @@
 (ns bunnicula.utils
-  (:require [cheshire.core :as json])
-  (:import (java.util.concurrent TimeoutException TimeUnit)))
+  (:require
+    [cheshire.core :as json])
+  (:import
+    (java.util.concurrent
+      Future
+      TimeUnit
+      TimeoutException)))
+
 
 (defmacro time-limited
   "Evaluate body in another thread.
@@ -10,7 +16,7 @@
   [ms-timeout timeout-response & body]
   `(let [f# (future ~@body)]
      (try
-       (.get f# ~ms-timeout TimeUnit/MILLISECONDS)
+       (.get ^Future  f# ~ms-timeout TimeUnit/MILLISECONDS)
        ;; ensure we cancel future on timeout
        (catch TimeoutException x#
          (do
@@ -22,16 +28,17 @@
            (future-cancel f#)
            (throw e#))))))
 
+
 (defn- to-string [body]
-  (String. body "UTF-8"))
+  (String. ^bytes body "UTF-8"))
+
 
 (defn json-serializer [message]
-  (-> message
-      json/generate-string
-      (.getBytes)))
+  (let [json  (json/generate-string message)]
+    (.getBytes ^String json)))
+
 
 (defn json-deserializer [body]
   (-> body
       to-string
       (json/parse-string true)))
-

@@ -1,6 +1,8 @@
 (ns bunnicula.component.monitoring
-  (:require [bunnicula.protocol :as protocol]
-            [clojure.tools.logging :as log]))
+  (:require
+    [bunnicula.protocol :as protocol]
+    [clojure.tools.logging :as log]))
+
 
 (defn- trim-message
   ([message]
@@ -8,6 +10,7 @@
   ([message size]
    (let [s (str message)]
      (subs s 0 (min size (count s))))))
+
 
 (def BaseMonitoring
   (reify
@@ -29,3 +32,7 @@
     (on-retry [this args]
       (log/errorf "consumer=%s retry attempt=%d message=%s"
                   (:queue-name args) (:retry-attempts args) (trim-message (:message args))))))
+
+
+(defn create []
+  BaseMonitoring)

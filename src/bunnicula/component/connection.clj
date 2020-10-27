@@ -1,15 +1,20 @@
 (ns bunnicula.component.connection
   "Component holds open connection to RMQ"
-  (:require [bunnicula.client.rabbitmq.connection :as connection]
-            [com.stuartsierra.component :as component]
-            [clojure.tools.logging :as log]
-            [clojure.string :as string])
-  (:import (java.net URI)))
+  (:require
+    [bunnicula.client.rabbitmq.connection :as connection]
+    [clojure.string :as string]
+    [clojure.tools.logging :as log]
+    [com.stuartsierra.component :as component])
+  (:import
+    (java.net
+      URI)))
+
 
 (defn- connection-url
   [{:keys [host port username password vhost]}]
   (format "amqp://%s:%s@%s:%s/%s"
           username password host port (string/replace vhost "/" "%2F")))
+
 
 (defrecord Connection [host port username password vhost connection-name  connection]
   component/Lifecycle
@@ -30,6 +35,7 @@
       (connection/close connection))
     (assoc this :connection nil)))
 
+
 (defn extract-server-config
   [{:keys [url host port username password vhost connection-name]}]
   {:post [#(string? (:host %))
@@ -37,7 +43,7 @@
           #(string? (:username %))
           #(string? (:password %))
           #(string? (:vhost %))]}
-  (if-let [^java.net.URI uri (and url (java.net.URI. url))]
+  (if-let [^URI uri (and url (java.net.URI. url))]
     (let [[username password] (string/split (.getUserInfo uri) #":")]
       {:host (.getHost uri)
        :port (.getPort uri)
@@ -51,6 +57,7 @@
      :password password
      :connection-name (or connection-name username)
      :vhost vhost}))
+
 
 (defn create
   "Create RabbitMQ connection for given connection config.
