@@ -13,6 +13,43 @@
    :connection-name "test"})
 
 
+(deftest connection-parser
+  (testing "regular connection string"
+    (is (= {:connection-name "rabbit"
+            :host "127.0.0.1"
+            :password "password"
+            :port 5672
+            :secure? false
+            :username "rabbit"
+            :vhost "/foo"}
+           (conn/extract-server-config {:url "amqp://rabbit:password@127.0.0.1:5672"
+                                        :vhost "/foo"}))))
+  (testing "ssl connection string"
+    (is (= {:connection-name "rabbit"
+            :host "127.0.0.1"
+            :password "password"
+            :port 5672
+            :secure? true
+            :username "rabbit"
+            :vhost "/foo"}
+           (conn/extract-server-config {:url "amqps://rabbit:password@127.0.0.1:5672"
+                                        :vhost "/foo"}))))
+  (testing "a map"
+    (is (= {:connection-name "bananas"
+            :host "foobar"
+            :password "fruit"
+            :port 20000
+            :secure? true
+            :username "bananas"
+            :vhost ""}
+           (conn/extract-server-config {:host "foobar"
+                                        :port 20000
+                                        :secure? true
+                                        :username "bananas"
+                                        :password "fruit"
+                                        :vhost ""})))))
+
+
 (deftest connection-test
   (testing "connection-test"
     (let [c (atom (conn/create rabbit-config))]

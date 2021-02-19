@@ -11,18 +11,24 @@
 
 
 (defn- connection-url
-  [{:keys [host port username password vhost]}]
-  (format "amqp://%s:%s@%s:%s/%s"
-          username password host port (string/replace vhost "/" "%2F")))
+  [{:keys [host port username password vhost secure?]}]
+  (format "%s://%s:%s@%s:%s/%s"
+          (if secure? "amqps" "amqp")
+          username
+          password
+          host
+          port
+          (string/replace vhost "/" "%2F")))
 
 
-(defrecord Connection [host port username password vhost connection-name  connection]
+(defrecord Connection [host port username password vhost connection-name secure?  connection]
   component/Lifecycle
   (start [this]
     (if connection
       this
       (let [url (connection-url {:host host
                                  :port port
+                                 :secure? secure?
                                  :username username
                                  :password password
                                  :vhost vhost})
@@ -37,16 +43,19 @@
 
 
 (defn extract-server-config
-  [{:keys [url host port username password vhost connection-name]}]
+  [{:keys [url host port username password vhost connection-name secure?]}]
   {:post [#(string? (:host %))
           #(string? (:port %))
           #(string? (:username %))
           #(string? (:password %))
           #(string? (:vhost %))]}
   (if-let [^URI uri (and url (java.net.URI. url))]
-    (let [[username password] (string/split (.getUserInfo uri) #":")]
+    (let [[username password] (string/split (.getUserInfo uri) #":")
+          secure? (string/starts-with? url "amqps")
+          ]
       {:host (.getHost uri)
        :port (.getPort uri)
+       :secure? secure?
        :username username
        :password password
        :connection-name (or connection-name username)
@@ -55,6 +64,7 @@
      :port port
      :username username
      :password password
+     :secure? secure?
      :connection-name (or connection-name username)
      :vhost vhost}))
 
