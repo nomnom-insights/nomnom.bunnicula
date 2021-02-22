@@ -483,9 +483,13 @@ See a [full example of a component system with a publisher, monitoring and a con
 
 # Release notes
 
-## v2.2.1
+## v2.2.2
 
 - support for `amqps://` scheme and `secure?` flag to allow connecting to RabbitMQ servers with TLS enabled
+
+## V2.2.1
+
+- yanked, do not use
 
 ## v2.2.0
 
