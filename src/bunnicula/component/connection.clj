@@ -20,6 +20,7 @@
           port
           (string/replace vhost "/" "%2F")))
 
+
 (defn extract-server-config
   [{:keys [url host port username password vhost connection-name secure?]}]
   {:post [(string? host)
@@ -46,6 +47,7 @@
      :connection-name (or connection-name username)
      :vhost vhost}))
 
+
 (defrecord Connection [host port username password vhost connection-name secure?  connection]
   component/Lifecycle
   (start [this]
@@ -65,9 +67,6 @@
     (when connection
       (connection/close connection))
     (assoc this :connection nil)))
-
-
-
 
 
 (defn create
