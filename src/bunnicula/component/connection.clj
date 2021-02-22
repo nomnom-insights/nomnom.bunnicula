@@ -23,11 +23,6 @@
 
 (defn extract-server-config
   [{:keys [url host port username password vhost connection-name secure?]}]
-  {:post [(string? host)
-          (string? port)
-          (string? username)
-          (string? password)
-          (string? vhost)]}
   (if-let [^URI uri (and url (java.net.URI. url))]
     (let [[username password] (string/split (.getUserInfo uri) #":")
           scheme (.getScheme uri)
