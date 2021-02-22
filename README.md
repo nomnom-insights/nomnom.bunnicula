@@ -110,6 +110,7 @@ Connection component is **a required dependency** by the publisher & consumer co
 or by map with `host`, `port`, `username` and `password` keys
 - `vhost` is always required to be present in configuration, default is "/"
 - optionally user can specify `connection-name` - this is a recommended setting if you have multiple applications connecting to the same RabbitMQ server
+- optionally you can set `secure?` flag to enable connecting to RabbitMQ server with TLS/SSL enabled
 
 ### Usage
 
@@ -123,6 +124,7 @@ or by map with `host`, `port`, `username` and `password` keys
                                     :host "127.0.0.1"
                                     :port 5672
                                     :vhost "/main"
+                                    :secure? true
                                     :connection-name "connection-test"}))
 
 ;; connection specified by url
@@ -481,7 +483,11 @@ See a [full example of a component system with a publisher, monitoring and a con
 
 # Release notes
 
-## v2.2.0-SNAPSHOT
+## v2.2.1
+
+- support for `amqps://` scheme and `secure?` flag to allow connecting to RabbitMQ servers with TLS enabled
+
+## v2.2.0
 
 - more flexible configuration, with somewhat better option names
 - updated dependencies
