@@ -47,7 +47,13 @@
                                         :secure? true
                                         :username "bananas"
                                         :password "fruit"
-                                        :vhost ""})))))
+                                        :vhost ""}))))
+  (testing "round trip"
+    (is (= "amqps://usr:pass@some-host:2345/test%2Fbar"
+           (-> {:url "amqps://usr:pass@some-host:2345"
+                :vhost "test/bar"}
+               conn/extract-server-config
+               conn/connection-url)))))
 
 
 (deftest connection-test

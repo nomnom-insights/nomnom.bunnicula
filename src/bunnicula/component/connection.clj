@@ -10,7 +10,7 @@
       URI)))
 
 
-(defn- connection-url
+(defn connection-url
   [{:keys [host port username password vhost secure?]}]
   (format "%s://%s:%s@%s:%s/%s"
           (if secure? "amqps" "amqp")
@@ -20,6 +20,31 @@
           port
           (string/replace vhost "/" "%2F")))
 
+(defn extract-server-config
+  [{:keys [url host port username password vhost connection-name secure?]}]
+  {:post [#(string? (:host %))
+          #(string? (:port %))
+          #(string? (:username %))
+          #(string? (:password %))
+          #(string? (:vhost %))]}
+  (if-let [^URI uri (and url (java.net.URI. url))]
+    (let [[username password] (string/split (.getUserInfo uri) #":")
+          scheme (.getScheme uri)
+          secure? (= scheme "amqps")]
+      {:host (.getHost uri)
+       :port (.getPort uri)
+       :secure? secure?
+       :username username
+       :password password
+       :connection-name (or connection-name username)
+       :vhost vhost})
+    {:host host
+     :port port
+     :username username
+     :password password
+     :secure? secure?
+     :connection-name (or connection-name username)
+     :vhost vhost}))
 
 (defrecord Connection [host port username password vhost connection-name secure?  connection]
   component/Lifecycle
@@ -42,31 +67,7 @@
     (assoc this :connection nil)))
 
 
-(defn extract-server-config
-  [{:keys [url host port username password vhost connection-name secure?]}]
-  {:post [#(string? (:host %))
-          #(string? (:port %))
-          #(string? (:username %))
-          #(string? (:password %))
-          #(string? (:vhost %))]}
-  (if-let [^URI uri (and url (java.net.URI. url))]
-    (let [[username password] (string/split (.getUserInfo uri) #":")
-          secure? (string/starts-with? url "amqps")
-          ]
-      {:host (.getHost uri)
-       :port (.getPort uri)
-       :secure? secure?
-       :username username
-       :password password
-       :connection-name (or connection-name username)
-       :vhost vhost})
-    {:host host
-     :port port
-     :username username
-     :password password
-     :secure? secure?
-     :connection-name (or connection-name username)
-     :vhost vhost}))
+
 
 
 (defn create
