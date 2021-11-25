@@ -9,12 +9,20 @@ concurrency:
 jobs:
 
   test:
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+
     runs-on: ubuntu-latest
     container:
       image: clojure:openjdk-11-lein-2.9.6
     services:
       rabbitmq:
-        image: rabbitmq:3.7
+        image: rabbitmq:${{ matrix.version }}
         env:
           RABBITMQ_DEFAULT_USER: rabbit
           RABBITMQ_DEFAULT_PASS: password
@@ -26,7 +34,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
 
     steps:
     - uses: actions/checkout@v2
