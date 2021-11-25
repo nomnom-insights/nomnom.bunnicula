@@ -9,7 +9,8 @@
 (def default-routing-key "#")
 
 
-(defn open? [channel]
+(defn open?
+  [channel]
   (and channel (.isOpen ^Channel channel)))
 
 
@@ -23,7 +24,8 @@
      ch)))
 
 
-(defn close [^Channel channel]
+(defn close
+  [^Channel channel]
   (if (.isOpen ^Channel channel)
     (.close ^Channel channel)
     channel))

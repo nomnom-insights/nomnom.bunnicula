@@ -34,7 +34,8 @@
 (def test-results (atom {}))
 
 
-(defn inc-test-result [key]
+(defn inc-test-result
+  [key]
   (swap! test-results
          #(update % key (fn [r] (if r (inc r) 1)))))
 
@@ -54,24 +55,50 @@
 
 
 ;; mock of Monitoring component
-(defrecord  Monitoring [counter]
+(defrecord  Monitoring
+  [counter]
+
   component/Lifecycle
-  (start [this]
+
+  (start
+    [this]
     (assoc this :counter (atom {:ok 0 :fail 0 :retry 0 :timeout 0 :error 0})))
-  (stop [this]
+
+
+  (stop
+    [this]
     (assoc this :counter nil))
+
+
   protocol/Monitoring
-  (with-tracking [this message-fn]
+
+  (with-tracking
+    [_ message-fn]
     (time (message-fn)))
-  (on-success [this args]
+
+
+  (on-success
+    [_ _]
     (swap! counter #(update % :ok inc)))
-  (on-error [this args]
+
+
+  (on-error
+    [_ _]
     (swap! counter #(update % :error inc)))
-  (on-exception [this args]
+
+
+  (on-exception
+    [_ _]
     (swap! counter #(update % :fail inc)))
-  (on-timeout [this args]
+
+
+  (on-timeout
+    [_ _]
     (swap! counter #(update % :timeout inc)))
-  (on-retry [this args]
+
+
+  (on-retry
+    [_ _]
     (swap! counter #(update % :retry inc))))
 
 
@@ -101,7 +128,7 @@
                                          :message-handler-fn message-handler-fn})
                        {:rmq-connection :rmq-connection
                         :monitoring :mock-monitoring
-                      ;; will be passed to message-handler
+                        ;; will be passed to message-handler
                         :dependency :dependency})))
 
 

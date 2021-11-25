@@ -7,9 +7,13 @@
     [com.stuartsierra.component :as component]))
 
 
-(defrecord Publisher [rmq-connection channel serializer exchange-name]
+(defrecord Publisher
+  [rmq-connection channel serializer exchange-name]
+
   component/Lifecycle
-  (start [component]
+
+  (start
+    [component]
     (if (channel/open? channel)
       component
       (if (:connection rmq-connection)
@@ -20,20 +24,29 @@
           (assoc component :channel channel))
         (throw (ex-info "missing-rmq-connection" {})))))
 
-  (stop [component]
+
+  (stop
+    [component]
     (log/infof "stop-publisher connection-name=%s" (:connection-name rmq-connection))
     (when (channel/open? channel)
       (channel/close channel))
     (assoc component :channel nil))
 
+
   protocol/Publisher
-  (publish [this routing-key body]
+
+  (publish
+    [this routing-key body]
     (protocol/publish this exchange-name routing-key body {}))
 
-  (publish [this routing-key body options]
+
+  (publish
+    [this routing-key body options]
     (protocol/publish this exchange-name routing-key body options))
 
-  (publish [this exchange routing-key body options]
+
+  (publish
+    [_ exchange routing-key body options]
     (if (channel/open? channel)
       (channel/publish-message channel {:exchange exchange
                                         :routing-key routing-key
@@ -53,7 +66,7 @@
   ([]
    (create {}))
   ([{:keys [serializer exchange-name] :as _config}]
-  ;; rmq-connection is required to be injected as dependency
+   ;; rmq-connection is required to be injected as dependency
    (map->Publisher
      {:serializer (or serializer utils/json-serializer)
       :exchange-name (or exchange-name "")})))

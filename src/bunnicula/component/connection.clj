@@ -43,9 +43,13 @@
      :vhost vhost}))
 
 
-(defrecord Connection [host port username password vhost connection-name secure?  connection]
+(defrecord Connection
+  [host port username password vhost connection-name secure?  connection]
+
   component/Lifecycle
-  (start [this]
+
+  (start
+    [this]
     (if connection
       this
       (let [url (connection-url {:host host
@@ -57,7 +61,10 @@
             conn (connection/create url connection-name)]
         (log/infof "rmq-connection start name=%s vhost=%s" connection-name vhost)
         (assoc this :connection conn))))
-  (stop [this]
+
+
+  (stop
+    [this]
     (log/infof "rmq-connection stop name=%s" connection-name)
     (when connection
       (connection/close connection))

@@ -29,16 +29,19 @@
            (throw e#))))))
 
 
-(defn- to-string [body]
+(defn- to-string
+  [body]
   (String. ^bytes body "UTF-8"))
 
 
-(defn json-serializer [message]
+(defn json-serializer
+  [message]
   (let [json  (json/generate-string message)]
     (.getBytes ^String json)))
 
 
-(defn json-deserializer [body]
+(defn json-deserializer
+  [body]
   (-> body
       to-string
       (json/parse-string true)))

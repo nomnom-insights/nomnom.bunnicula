@@ -15,24 +15,36 @@
 (def BaseMonitoring
   (reify
     protocol/Monitoring
-    (with-tracking [this message-fn]
+    (with-tracking
+      [this message-fn]
       ;; just evaluate fn
       (message-fn))
-    (on-success [this args]
+
+    (on-success
+      [this args]
       (log/infof "consumer=%s succeeded" (:queue-name args)))
-    (on-error [this args]
+
+    (on-error
+      [this args]
       (log/errorf "consumer=%s error message=%s"
                   (:queue-name args) (trim-message (:message args))))
-    (on-exception [this args]
+
+    (on-exception
+      [this args]
       (log/errorf (:exception args) "consumer=%s failed message=%s"
                   (:queue-name args) (trim-message (:message args))))
-    (on-timeout [this args]
+
+    (on-timeout
+      [this args]
       (log/errorf "consumer=%s timeout message=%s"
                   (:queue-name args) (trim-message (:message args))))
-    (on-retry [this args]
+
+    (on-retry
+      [this args]
       (log/errorf "consumer=%s retry attempt=%d message=%s"
                   (:queue-name args) (:retry-attempts args) (trim-message (:message args))))))
 
 
-(defn create []
+(defn create
+  []
   BaseMonitoring)
