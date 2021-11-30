@@ -40,22 +40,30 @@
   [message-handler]
   (reify Consumer
     (handleCancel [_ _])
+
     (handleCancelOk [_ _])
+
     (handleConsumeOk [_ _])
+
     (handleRecoverOk [_ _])
+
     (handleShutdownSignal [_ _ _])
-    (handleDelivery [_ consumer-tag envelope properties body]
+
+    (handleDelivery
+      [_ consumer-tag envelope properties body]
       (message-handler
         (envelope-to-map envelope)
         (properties-to-map properties)
         body))))
 
 
-(defn consume [channel qname message-handler]
+(defn consume
+  [channel qname message-handler]
   (let [consumer (consumer-from-handler message-handler)]
     (.basicConsume ^Channel channel qname consumer)))
 
 
-(defn cancel [^Channel channel ^String consumer-tag]
+(defn cancel
+  [^Channel channel ^String consumer-tag]
   (.basicCancel channel consumer-tag))
 

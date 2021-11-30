@@ -11,7 +11,8 @@
 
 ;; connection details assume that the RabbitMQ is running, as setup in the
 ;; docker-compose.yml file
-(defn create-system []
+(defn create-system
+  []
   {:rmq-connection (rmq.connection/create {:host "127.0.0.1"
                                            :port 5672
                                            :username "rabbit"

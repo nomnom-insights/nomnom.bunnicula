@@ -4,22 +4,39 @@
     [com.stuartsierra.component :as component]))
 
 
-(defrecord Mock [queues]
+(defrecord Mock
+  [queues]
+
   component/Lifecycle
-  (start [this]
+
+  (start
+    [this]
     (assoc this :queues (atom {})))
-  (stop [this]
+
+
+  (stop
+    [this]
     (assoc this :queues nil))
 
+
   protocol/Publisher
-  (publish [this routing-key body]
+
+  (publish
+    [_ routing-key body]
     (swap! queues update routing-key (fn [x] (conj x body))))
-  (publish [this routing-key body options]
+
+
+  (publish
+    [_ routing-key body _]
     (swap! queues update routing-key (fn [x] (conj x body))))
-  (publish [this exchange-name routing-key body options]
+
+
+  (publish
+    [_ exchange-name routing-key body _]
     (swap! queues update-in [exchange-name routing-key] (fn [x] (conj x body)))))
 
 
-(defn create []
+(defn create
+  []
   (map->Mock {}))
 

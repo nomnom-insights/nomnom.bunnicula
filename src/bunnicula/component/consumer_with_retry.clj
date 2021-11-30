@@ -11,19 +11,23 @@
       BasicProperties)))
 
 
-(defn- retry-queue [qname]
+(defn- retry-queue
+  [qname]
   (format "%s-retry" qname))
 
 
-(defn- error-queue [qname]
+(defn- error-queue
+  [qname]
   (format "%s-error" qname))
 
 
-(defn- retry-requeue [qname]
+(defn- retry-requeue
+  [qname]
   (format "%s-retry-requeue" qname))
 
 
-(defn- get-retry-attemps [^BasicProperties {:keys [headers] :as _properties}]
+(defn- get-retry-attemps
+  [^BasicProperties {:keys [headers] :as _properties}]
   (get headers "retry-attempts" 0))
 
 
@@ -187,12 +191,14 @@
             (handle-failure message "exception")))))))
 
 
-(defn- consume [channel consumer]
+(defn- consume
+  [channel consumer]
   (let [message-handler (create-message-handler channel consumer)
         queue-name (get-in consumer [:options :queue-name])]
     (consumer/consume channel queue-name message-handler)))
 
-; QUEUE PROPERTIES AS PER RABBITMQ DOCUMENTATION
+
+;; QUEUE PROPERTIES AS PER RABBITMQ DOCUMENTATION
 ;; Durable (the queue will survive a broker restart)
 ;; Exclusive (used by only one connection and the queue will be deleted when that connection closes)
 ;; Auto-delete (queue that has had at least one consumer is deleted when last consumer unsubscribes)
@@ -205,7 +211,7 @@
    :arguments {}})
 
 
-; ;EXCHANGE PROPERTIES AS PER RABBITMQ DOCUMENTATION
+;; ;EXCHANGE PROPERTIES AS PER RABBITMQ DOCUMENTATION
 ;; Durability (exchanges survive broker restart)
 ;; Auto-delete (exchange is deleted when last queue is unbound from it)
 
@@ -244,7 +250,7 @@
 
     (log/infof "declare retry-queue name=%s" queue-name-retry)
     (channel/declare-queue ch {:options (assoc default-queue-options
-                                          ;; setup DLE for retry queue
+                                               ;; setup DLE for retry queue
                                                :arguments {"x-dead-letter-exchange" exch-requeue})
                                :name queue-name-retry})
 
@@ -267,12 +273,17 @@
     (channel/bind-queue ch {:queue queue-name-retry
                             :exchange queue-name-retry})))
 
+
 ;; ========= Component =========
 
-(defrecord RetryConsumer [options monitoring rmq-connection
-                          channel consumer-channels consumer-tags]
+(defrecord RetryConsumer
+  [options monitoring rmq-connection
+   channel consumer-channels consumer-tags]
+
   component/Lifecycle
-  (start [this]
+
+  (start
+    [this]
     (log/infof "retry-consumer start name=%s" (:queue-name options))
     (when-not (and monitoring rmq-connection)
       (throw (ex-info "monitoring and rmq-connection are required compoenents" {})))
@@ -294,7 +305,9 @@
                :consumer-tags consumer-tags
                :channel ch))))
 
-  (stop [this]
+
+  (stop
+    [this]
     (log/infof "retry-consumer stop name=%s" (:queue-name options))
     ;; ensure all things are stopped
     (mapv (partial consumer/cancel) consumer-channels consumer-tags)
@@ -306,6 +319,7 @@
            :channel nil
            :consumer-tags nil
            :consumer-channels nil)))
+
 
 ;; ======= setup function ===========
 (def default-options
@@ -321,7 +335,8 @@
   (conj (set (keys default-options)) :exchange-name :queue-name))
 
 
-(defn- set-defaults [options]
+(defn- set-defaults
+  [options]
   (merge default-options options))
 
 
