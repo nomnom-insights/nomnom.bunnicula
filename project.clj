@@ -1,4 +1,4 @@
-(defproject nomnom/bunnicula "2.2.3-SNAPSHOT-1"
+(defproject nomnom/bunnicula "2.2.3"
   :description "Bunnicula: RabbitMQ client"
   :url "https://github.com/nomnom-insights/nomnom.bunnicula"
   :dependencies [[org.clojure/clojure "1.10.3"]
