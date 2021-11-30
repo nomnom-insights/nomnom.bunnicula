@@ -8,7 +8,25 @@ concurrency:
 
 jobs:
 
+  provision:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Cache deps
+      uses: actions/cache@v2
+      with:
+        path: /home/runner/.m2
+        key: v1-deps-${{ hashFiles('project.clj') }}
+        restore-keys: |
+          v1-deps-${{ hashFiles('project.clj') }}
+
+    - name: Install dependencies
+      run: lein deps
+
+
   test:
+    needs: provision
     strategy:
       fail-fast: false
       matrix:
@@ -46,8 +64,8 @@ jobs:
         restore-keys: |
           v1-deps-${{ hashFiles('project.clj') }}
 
-    - name: Install dependencies
-      run: lein deps
+    # - name: Install dependencies
+    #   run: lein deps
 
     - name: Run tests for ${{ matrix.rabbit-version }}
       id: tests
