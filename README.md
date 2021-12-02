@@ -16,41 +16,6 @@ A Clojure RabbitMQ client.
 
 ## Usage
 
-
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
-**Table of Contents**
-
-- [bunnicula](#bunnicula)
-    - [Installation](#installation)
-    - [Usage](#usage)
-    - [RabbitMQ implementation details](#rabbitmq-implementation-details)
-        - [-](#-)
-        - [Automatic recovery](#automatic-recovery)
-        - [Durability](#durability)
-- [Components](#components)
-    - [Connection component <a name="connection-component"></a>](#connection-component-a-nameconnection-componenta)
-        - [Configuration](#configuration)
-        - [Usage](#usage-1)
-        - [Mock publisher](#mock-publisher)
-    - [Consumer component <a name="consumer-component"></a>](#consumer-component-a-nameconsumer-componenta)
-        - [Message flow](#message-flow)
-        - [Exchanges and Queues](#exchanges-and-queues)
-        - [Component dependencies](#component-dependencies)
-        - [Configuration](#configuration-1)
-            - [handler <a name="handler-fn"></a>](#handler-a-namehandler-fna)
-        - [Usage](#usage-2)
-        - [Monitoring for consumer<a name="monitoring"></a>](#monitoring-for-consumera-namemonitoringa)
-    - [Base monitoring component <a name="base-monitoring-component"></a>](#base-monitoring-component-a-namebase-monitoring-componenta)
-        - [Example custom monitoring component](#example-custom-monitoring-component)
-- [Full example](#full-example)
-- [Release notes](#release-notes)
-    - [v2.2.0-SNAPSHOT](#v220-snapshot)
-    - [v2.1.0 (18.4.2019)](#v210-1842019)
-    - [v2.0.2 (15.9.2018)](#v202-1592018)
-
-<!-- markdown-toc end -->
-
-
 Bunnicula is framework for building asynchronous workflows with RabbitMQ.
 
 It defines 4 components (based on [Stuart Sierra's component lib](https://github.com/stuartsierra/component))
@@ -482,6 +447,10 @@ You can completely override metrics and error reporting backends and call their 
 See a [full example of a component system with a publisher, monitoring and a consumer](doc/example.clj).
 
 # Release notes
+
+## v2.2.3
+
+- updated dependencies
 
 ## v2.2.2
 
